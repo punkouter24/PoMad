@@ -1,0 +1,75 @@
+﻿@page "/dailydata"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using PoMad.Data
+@using PoMad.Models
+@using PoMad.Services
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject DailyDataService DailyDataService
+@inject NavigationManager NavigationManager
+
+<h1>Daily Data</h1>
+
+<EditForm Model="DailyData" OnValidSubmit="SaveDailyData">
+    <DataAnnotationsValidator />
+    <div class="form-group">
+        <label for="date">Date:</label>
+        <InputDate id="date" class="form-control" @bind-Value="DailyData.Date" />
+    </div>
+    <div class="form-group">
+        <label for="calories">Calories:</label>
+        <InputNumber id="calories" class="form-control" @bind-Value="DailyData.Calories" />
+    </div>
+    <div class="form-group">
+        <label for="weight">Weight:</label>
+        <InputNumber id="weight" class="form-control" @bind-Value="DailyData.Weight" step="0.1" />
+    </div>
+    <div class="form-group form-check">
+        <InputCheckbox id="didOMAD" class="form-check-input" @bind-Value="DailyData.DidOMAD" />
+        <label class="form-check-label" for="didOMAD">Did OMAD</label>
+    </div>
+    <button type="submit" class="btn btn-primary">Save</button>
+</EditForm>
+
+@code {
+    private DailyData DailyData { get; set; } = new DailyData { Date = DateTime.Today };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await UserManager.GetUserAsync(authState.User);
+        if (user != null)
+        {
+            DailyData = await DailyDataService.GetDailyDataAsync(user.Id, DateTime.Today);
+            if (DailyData == null)
+            {
+                // Create a new blank DailyData instance if there's no data for today
+                DailyData = new DailyData
+                {
+                    Date = DateTime.Today
+                };
+            }
+        }
+    }
+
+    private async Task SaveDailyData()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await UserManager.GetUserAsync(authState.User);
+        if (user != null)
+        {
+            // Set the UserId of DailyData before saving
+            DailyData.UserId = user.Id;
+        }
+
+        // Ensure DailyData has a valid Date before saving
+        if (DailyData.Date == DateTime.MinValue)
+        {
+            DailyData.Date = DateTime.Today;
+        }
+        await DailyDataService.SaveDailyDataAsync(DailyData);
+        NavigationManager.NavigateTo("/");
+    }
+}

@@ -1,0 +1,99 @@
+﻿@page "/calendar"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using PoMad.Data
+@using PoMad.Models
+@using PoMad.Services
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject DailyDataService DailyDataService
+
+<h1>Calendar</h1>
+
+<div class="calendar-controls">
+    <button class="btn btn-primary" @onclick="PreviousMonth">&lt;</button>
+    <span class="current-month">@_currentMonth.ToString("MMMM yyyy")</span>
+    <button class="btn btn-primary" @onclick="NextMonth">&gt;</button>
+</div>
+
+<div class="calendar-grid">
+    <div class="calendar-header">
+        <div class="calendar-cell">Sun</div>
+        <div class="calendar-cell">Mon</div>
+        <div class="calendar-cell">Tue</div>
+        <div class="calendar-cell">Wed</div>
+        <div class="calendar-cell">Thu</div>
+        <div class="calendar-cell">Fri</div>
+        <div class="calendar-cell">Sat</div>
+    </div>
+
+    @for (int week = 0; week < 6; week++)
+    {
+        <div class="calendar-row">
+            @for (int day = 0; day < 7; day++)
+            {
+                var date = _dates[week * 7 + day];
+                var dailyData = _dailyDataList?.FirstOrDefault(d => d.Date == date);
+
+                <div class="calendar-cell @(date.Month != _currentMonth.Month ? "inactive" : "")">
+                    <div class="date">@date.Day</div>
+                    @if (dailyData != null)
+                    {
+                        <div class="calories">@dailyData.Calories</div>
+                        <div class="weight">@dailyData.Weight.ToString("F1")</div>
+                        <div class="omad">@(dailyData.DidOMAD ? "OMAD" : "")</div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private DateTime _currentMonth = DateTime.Today;
+    private List<DailyData> _dailyDataList;
+    private DateTime[] _dates = new DateTime[42];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        UpdateCalendar();
+    }
+
+    private async Task LoadData()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await UserManager.GetUserAsync(authState.User);
+        if (user != null)
+        {
+            _dailyDataList = await DailyDataService.GetDailyDataForUserAsync(user.Id);
+        }
+    }
+
+    private void UpdateCalendar()
+    {
+        var firstDayOfMonth = new DateTime(_currentMonth.Year, _currentMonth.Month, 1);
+        var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
+        var startDate = firstDayOfMonth.AddDays(-(int)firstDayOfMonth.DayOfWeek);
+
+        for (int i = 0; i < 42; i++)
+        {
+            _dates[i] = startDate.AddDays(i);
+        }
+    }
+
+    private async Task PreviousMonth()
+    {
+        _currentMonth = _currentMonth.AddMonths(-1);
+        await LoadData();
+        UpdateCalendar();
+    }
+
+    private async Task NextMonth()
+    {
+        _currentMonth = _currentMonth.AddMonths(1);
+        await LoadData();
+        UpdateCalendar();
+    }
+}

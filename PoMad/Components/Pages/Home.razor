@@ -1,0 +1,147 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using PoMad.Data
+@using PoMad.Models
+@using PoMad.Services
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject DailyDataService DailyDataService
+@inject NavigationManager NavigationManager
+
+<h1>Dashboard</h1>
+
+@* <div Class="rz-p-0 rz-p-md-12">
+    <RadzenChart>
+        <RadzenColumnSeries Data="@revenue1" CategoryProperty="Quarter" ValueProperty="Revenue" />
+        <RadzenColumnSeries Data="@revenue2" CategoryProperty="Quarter" ValueProperty="Revenue" />
+    </RadzenChart>
+</div> *@
+
+<div class="row">
+    <div class="col-md-6">
+        <h3>Monthly Weight</h3>
+        <RadzenChart>
+            <RadzenLineSeries Data="_monthlyWeightData" CategoryProperty="Month" ValueProperty="Weight" Title="Weight" />
+            <RadzenCategoryAxis>
+                <RadzenAxisTitle Text="Month" />
+            </RadzenCategoryAxis>
+            <RadzenValueAxis>
+                <RadzenAxisTitle Text="Weight" />
+            </RadzenValueAxis>
+        </RadzenChart>
+    </div>
+    <div class="col-md-6">
+        <h3>Monthly Calories</h3>
+        <RadzenChart>
+            <RadzenColumnSeries Data="_monthlyCaloriesData" CategoryProperty="Month" ValueProperty="Calories" Title="Calories" />
+            <RadzenCategoryAxis>
+                <RadzenAxisTitle Text="Month" />
+            </RadzenCategoryAxis>
+            <RadzenValueAxis>
+                <RadzenAxisTitle Text="Calories" />
+            </RadzenValueAxis>
+        </RadzenChart>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <h3>OMAD Days</h3>
+        <RadzenDataGrid AllowFiltering="true" AllowPaging="true" PageSize="10" AllowSorting="true" Data="_dailyDataList" TItem="DailyData">
+            <Columns>
+                <RadzenDataGridColumn TItem="DailyData" Property="Date" Title="Date" />
+                <RadzenDataGridColumn TItem="DailyData" Property="Calories" Title="Calories" />
+                <RadzenDataGridColumn TItem="DailyData" Property="Weight" Title="Weight" />
+                <RadzenDataGridColumn TItem="DailyData" Property="DidOMAD" Title="Did OMAD" />
+                <RadzenDataGridColumn TItem="DailyData" Property="DidOMAD" Title="OMAD" />
+            </Columns>
+        </RadzenDataGrid>
+    </div>
+</div>
+
+@code {
+
+    // class DataItem
+    // {
+    //     public string Quarter { get; set; }
+    //     public double Revenue { get; set; }
+    // }
+
+    // DataItem[] revenue1 = new DataItem[]
+    // {
+    //   new DataItem { Quarter = "Q1", Revenue = 234000 },
+    //   new DataItem { Quarter = "Q2", Revenue = 284000 },
+    //   new DataItem { Quarter = "Q3", Revenue = 274000 },
+    //   new DataItem { Quarter = "Q4", Revenue = 294000 }
+    // };
+
+    // DataItem[] revenue2 = new DataItem[]
+    // {
+    //   new DataItem { Quarter = "Q1", Revenue = 324000 },
+    //   new DataItem { Quarter = "Q2", Revenue = 224000 },
+    //   new DataItem { Quarter = "Q3", Revenue = 444000 },
+    //   new DataItem { Quarter = "Q4", Revenue = 564000 }
+    // };
+
+
+
+
+
+
+
+
+
+    private List<DailyData> _dailyDataList;
+    private List<MonthlyWeightData> _monthlyWeightData;
+    private List<MonthlyCaloriesData> _monthlyCaloriesData;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await UserManager.GetUserAsync(authState.User);
+        if (user != null)
+        {
+            _dailyDataList = await DailyDataService.GetDailyDataForUserAsync(user.Id);
+            GenerateMonthlyWeightData();
+            GenerateMonthlyCaloriesData();
+        }
+    }
+
+    private void GenerateMonthlyWeightData()
+    {
+        _monthlyWeightData = _dailyDataList
+            .GroupBy(d => new { d.Date.Year, d.Date.Month })
+            .Select(g => new MonthlyWeightData
+                {
+                    Month = $"{g.Key.Year}-{g.Key.Month:D2}",
+                    Weight = g.Average(d => d.Weight)
+                })
+            .ToList();
+    }
+
+    private void GenerateMonthlyCaloriesData()
+    {
+        _monthlyCaloriesData = _dailyDataList
+            .GroupBy(d => new { d.Date.Year, d.Date.Month })
+            .Select(g => new MonthlyCaloriesData
+                {
+                    Month = $"{g.Key.Year}-{g.Key.Month:D2}",
+                    Calories = (int)g.Average(d => d.Calories)
+                })
+            .ToList();
+    }
+
+    public class MonthlyWeightData
+    {
+        public string Month { get; set; }
+        public double Weight { get; set; }
+    }
+
+    public class MonthlyCaloriesData
+    {
+        public string Month { get; set; }
+        public int Calories { get; set; }
+    }
+}
