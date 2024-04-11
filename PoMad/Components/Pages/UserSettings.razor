@@ -5,6 +5,7 @@
 @using PoMad.Services
 @inject UserManager<ApplicationUser> UserManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
 
 <h1>User Settings</h1>
 
@@ -39,6 +40,10 @@
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         user = await UserManager.GetUserAsync(authState.User);
+        if (user.Birthday == DateTime.MinValue)
+        {
+            user.Birthday = new DateTime(1975, 1, 1);
+        }
         // Assuming user is not null, otherwise handle null case
     }
 
@@ -51,7 +56,7 @@
         }
         else
         {
-            // Optionally, redirect or show a success message
+            NavigationManager.NavigateTo("/");
         }
     }
 }

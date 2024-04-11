@@ -76,6 +76,9 @@ h1:focus {
     border: 1px solid #ccc;
     padding: 5px;
     text-align: center;
+    width: 100px;  /* Fixed width */
+    height: 100px; /* Fixed height */
+    overflow: hidden; /* Prevents content overflow */
 }
 
     .calendar-cell.inactive {
@@ -91,3 +94,15 @@ h1:focus {
     .calendar-cell .omad {
         font-size: 12px;
     }
+
+.omad-true {
+    background-color: green;
+}
+
+.omad-false {
+    background-color: red;
+}
+
+.no-data {
+    background-color: white;
+}

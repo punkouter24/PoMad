@@ -12,18 +12,11 @@
 
 <h1>Dashboard</h1>
 
-@* <div Class="rz-p-0 rz-p-md-12">
-    <RadzenChart>
-        <RadzenColumnSeries Data="@revenue1" CategoryProperty="Quarter" ValueProperty="Revenue" />
-        <RadzenColumnSeries Data="@revenue2" CategoryProperty="Quarter" ValueProperty="Revenue" />
-    </RadzenChart>
-</div> *@
-
 <div class="row">
     <div class="col-md-6">
         <h3>Monthly Weight</h3>
         <RadzenChart>
-            <RadzenLineSeries Data="_monthlyWeightData" CategoryProperty="Month" ValueProperty="Weight" Title="Weight" />
+            <RadzenColumnSeries Data="_monthlyWeightData" CategoryProperty="Month" ValueProperty="Weight" Title="Weight" />
             <RadzenCategoryAxis>
                 <RadzenAxisTitle Text="Month" />
             </RadzenCategoryAxis>
@@ -55,44 +48,12 @@
                 <RadzenDataGridColumn TItem="DailyData" Property="Calories" Title="Calories" />
                 <RadzenDataGridColumn TItem="DailyData" Property="Weight" Title="Weight" />
                 <RadzenDataGridColumn TItem="DailyData" Property="DidOMAD" Title="Did OMAD" />
-                <RadzenDataGridColumn TItem="DailyData" Property="DidOMAD" Title="OMAD" />
             </Columns>
         </RadzenDataGrid>
     </div>
 </div>
 
 @code {
-
-    // class DataItem
-    // {
-    //     public string Quarter { get; set; }
-    //     public double Revenue { get; set; }
-    // }
-
-    // DataItem[] revenue1 = new DataItem[]
-    // {
-    //   new DataItem { Quarter = "Q1", Revenue = 234000 },
-    //   new DataItem { Quarter = "Q2", Revenue = 284000 },
-    //   new DataItem { Quarter = "Q3", Revenue = 274000 },
-    //   new DataItem { Quarter = "Q4", Revenue = 294000 }
-    // };
-
-    // DataItem[] revenue2 = new DataItem[]
-    // {
-    //   new DataItem { Quarter = "Q1", Revenue = 324000 },
-    //   new DataItem { Quarter = "Q2", Revenue = 224000 },
-    //   new DataItem { Quarter = "Q3", Revenue = 444000 },
-    //   new DataItem { Quarter = "Q4", Revenue = 564000 }
-    // };
-
-
-
-
-
-
-
-
-
     private List<DailyData> _dailyDataList;
     private List<MonthlyWeightData> _monthlyWeightData;
     private List<MonthlyCaloriesData> _monthlyCaloriesData;
@@ -116,7 +77,7 @@
             .Select(g => new MonthlyWeightData
                 {
                     Month = $"{g.Key.Year}-{g.Key.Month:D2}",
-                    Weight = g.Average(d => d.Weight)
+                    Weight = (int)g.Average(d => d.Weight)
                 })
             .ToList();
     }
@@ -136,7 +97,7 @@
     public class MonthlyWeightData
     {
         public string Month { get; set; }
-        public double Weight { get; set; }
+        public int Weight { get; set; }
     }
 
     public class MonthlyCaloriesData

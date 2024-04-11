@@ -34,9 +34,9 @@
             @for (int day = 0; day < 7; day++)
             {
                 var date = _dates[week * 7 + day];
-                var dailyData = _dailyDataList?.FirstOrDefault(d => d.Date == date);
+                var dailyData = _dailyDataList?.FirstOrDefault(d => d.Date.Date == date.Date);
 
-                <div class="calendar-cell @(date.Month != _currentMonth.Month ? "inactive" : "")">
+                <div class="calendar-cell @(date.Month != _currentMonth.Month ? "inactive" : "") @(dailyData != null ? (dailyData.DidOMAD ? "" : "omad-false") : "no-data")">
                     <div class="date">@date.Day</div>
                     @if (dailyData != null)
                     {
