@@ -31,7 +31,17 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 
+// Bind Google settings
+_ = builder.Services.Configure<GoogleAuthConfig>(builder.Configuration.GetSection("Google"));
 
+_ = builder.Services.AddAuthentication().AddGoogle(googleOptions =>
+{
+    // Resolve Google configuration options
+    GoogleAuthConfig? googleConfig = builder.Configuration.GetSection("Google").Get<GoogleAuthConfig>();
+    googleOptions.ClientId = googleConfig.ClientId;
+    googleOptions.ClientSecret = googleConfig.ClientSecret;
+    googleOptions.SignInScheme = IdentityConstants.ExternalScheme;
+});
 
 
 builder.Services.AddTransient<DailyDataService>();

@@ -13,7 +13,7 @@
 <h1>Dashboard</h1>
 
 <div class="row">
-    <div class="col-md-6">
+    <div class="col-md-12">
         <h3>Monthly Weight</h3>
         <RadzenChart>
             <RadzenColumnSeries Data="_monthlyWeightData" CategoryProperty="Month" ValueProperty="Weight" Title="Weight" />
@@ -25,7 +25,7 @@
             </RadzenValueAxis>
         </RadzenChart>
     </div>
-    <div class="col-md-6">
+    <div class="col-md-12">
         <h3>Monthly Calories</h3>
         <RadzenChart>
             <RadzenColumnSeries Data="_monthlyCaloriesData" CategoryProperty="Month" ValueProperty="Calories" Title="Calories" />
@@ -72,25 +72,33 @@
 
     private void GenerateMonthlyWeightData()
     {
-        _monthlyWeightData = _dailyDataList
-            .GroupBy(d => new { d.Date.Year, d.Date.Month })
-            .Select(g => new MonthlyWeightData
-                {
-                    Month = $"{g.Key.Year}-{g.Key.Month:D2}",
-                    Weight = (int)g.Average(d => d.Weight)
-                })
+        var allMonths = Enumerable.Range(1, 12).Select(m => new { Month = $"{DateTime.Today.Year}-{m:D2}" });
+        _monthlyWeightData = allMonths
+            .GroupJoin(_dailyDataList,
+                m => m.Month,
+                d => $"{d.Date.Year}-{d.Date.Month:D2}",
+                (m, g) => new { Month = m.Month, Weights = g.Select(d => d.Weight) })
+            .Select(x => new MonthlyWeightData
+            {
+                Month = x.Month,
+                Weight = x.Weights.Any() ? (int)x.Weights.Average() : 0
+            })
             .ToList();
     }
 
     private void GenerateMonthlyCaloriesData()
     {
-        _monthlyCaloriesData = _dailyDataList
-            .GroupBy(d => new { d.Date.Year, d.Date.Month })
-            .Select(g => new MonthlyCaloriesData
-                {
-                    Month = $"{g.Key.Year}-{g.Key.Month:D2}",
-                    Calories = (int)g.Average(d => d.Calories)
-                })
+        var allMonths = Enumerable.Range(1, 12).Select(m => new { Month = $"{DateTime.Today.Year}-{m:D2}" });
+        _monthlyCaloriesData = allMonths
+            .GroupJoin(_dailyDataList,
+                m => m.Month,
+                d => $"{d.Date.Year}-{d.Date.Month:D2}",
+                (m, g) => new { Month = m.Month, Calories = g.Select(d => d.Calories) })
+            .Select(x => new MonthlyCaloriesData
+            {
+                Month = x.Month,
+                Calories = x.Calories.Any() ? (int)x.Calories.Average() : 0
+            })
             .ToList();
     }
 
