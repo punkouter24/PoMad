@@ -1,3 +1,5 @@
+using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +9,7 @@ using PoMad.Data;
 using PoMad.Services;
 using Radzen;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -25,23 +27,86 @@ builder.Services.AddAuthentication(options =>
     })
     .AddIdentityCookies();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+string connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 
-// Bind Google settings
-_ = builder.Services.Configure<GoogleAuthConfig>(builder.Configuration.GetSection("Google"));
 
-_ = builder.Services.AddAuthentication().AddGoogle(googleOptions =>
+
+
+
+//string? vaultUriString = builder.Configuration["VaultUri"];
+//if (string.IsNullOrEmpty(vaultUriString))
+//{
+//    throw new InvalidOperationException("VaultUri configuration not found.");
+//}
+//Uri keyVaultEndpoint = new(vaultUriString);
+//builder.Configuration.AddAzureKeyVault(keyVaultEndpoint, new DefaultAzureCredential());
+
+//// Build a secret client
+//string keyVaultUrl = "https://pomad.vault.azure.net/";
+//SecretClient client = new(new Uri(keyVaultUrl), new DefaultAzureCredential());
+
+//// Retrieve secrets
+//Azure.Response<KeyVaultSecret> clientId = client.GetSecret("GoogleClientId");
+//Azure.Response<KeyVaultSecret> clientSecret = client.GetSecret("GoogleClientSecret");
+
+//// Configure Google authentication with secrets from Azure Key Vault
+//builder.Services.AddAuthentication().AddGoogle(options =>
+//{
+//    options.ClientId = clientId.Value.Value;
+//    options.ClientSecret = clientSecret.Value.Value;
+//    options.SignInScheme = IdentityConstants.ExternalScheme;
+//});
+
+
+
+
+
+//string? vaultUriString = builder.Configuration["VaultUri"];
+//if (string.IsNullOrEmpty(vaultUriString))
+//{
+//    throw new InvalidOperationException("VaultUri configuration not found.");
+//}
+//Uri keyVaultEndpoint = new Uri(vaultUriString);
+//builder.Configuration.AddAzureKeyVault(keyVaultEndpoint, new DefaultAzureCredential());
+
+//// Build a secret client
+//SecretClient client = new SecretClient(keyVaultEndpoint, new DefaultAzureCredential());
+
+//// Retrieve secrets asynchronously
+//var clientId = await client.GetSecretAsync("GoogleClientId");
+//var clientSecret = await client.GetSecretAsync("GoogleClientSecret");
+
+//// Configure Google authentication with secrets from Azure Key Vault
+//builder.Services.AddAuthentication().AddGoogle(options =>
+//{
+//    options.ClientId = clientId.Value.Value;
+//    options.ClientSecret = clientSecret.Value.Value;
+//    options.SignInScheme = IdentityConstants.ExternalScheme;
+//});
+
+
+
+
+
+
+
+// Bind Google settings from appsettings.json
+builder.Services.Configure<GoogleAuthConfig>(builder.Configuration.GetSection("GoogleAuth"));
+builder.Services.AddAuthentication().AddGoogle(googleOptions =>
 {
-    // Resolve Google configuration options
-    GoogleAuthConfig? googleConfig = builder.Configuration.GetSection("Google").Get<GoogleAuthConfig>();
+    GoogleAuthConfig googleConfig = builder.Configuration.GetSection("GoogleAuth").Get<GoogleAuthConfig>();
     googleOptions.ClientId = googleConfig.ClientId;
     googleOptions.ClientSecret = googleConfig.ClientSecret;
     googleOptions.SignInScheme = IdentityConstants.ExternalScheme;
 });
+
+
+
+
 
 
 builder.Services.AddTransient<DailyDataService>();
@@ -65,18 +130,18 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseMigrationsEndPoint();
+    _ = app.UseMigrationsEndPoint();
 }
 else
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    _ = app.UseExceptionHandler("/Error", createScopeForErrors: true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
+    _ = app.UseHsts();
 }
 
 app.UseHttpsRedirection();
@@ -91,3 +156,7 @@ app.MapRazorComponents<App>()
 app.MapAdditionalIdentityEndpoints();
 
 app.Run();
+
+
+
+//  az webapp config appsettings set --name PoMad --resource-group PoMad --settings GoogleAuth:ClientId="732386519629-bqh9gqoq1snfcb6j1fh88j5lscj5v4ht.apps.googleusercontent.com" GoogleAuth:ClientSecret="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"
