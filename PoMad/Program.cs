@@ -65,44 +65,44 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 
 
-//string? vaultUriString = builder.Configuration["VaultUri"];
-//if (string.IsNullOrEmpty(vaultUriString))
-//{
-//    throw new InvalidOperationException("VaultUri configuration not found.");
-//}
-//Uri keyVaultEndpoint = new Uri(vaultUriString);
-//builder.Configuration.AddAzureKeyVault(keyVaultEndpoint, new DefaultAzureCredential());
-
-//// Build a secret client
-//SecretClient client = new SecretClient(keyVaultEndpoint, new DefaultAzureCredential());
-
-//// Retrieve secrets asynchronously
-//var clientId = await client.GetSecretAsync("GoogleClientId");
-//var clientSecret = await client.GetSecretAsync("GoogleClientSecret");
-
-//// Configure Google authentication with secrets from Azure Key Vault
-//builder.Services.AddAuthentication().AddGoogle(options =>
-//{
-//    options.ClientId = clientId.Value.Value;
-//    options.ClientSecret = clientSecret.Value.Value;
-//    options.SignInScheme = IdentityConstants.ExternalScheme;
-//});
-
-
-
-
-
-
-
-// Bind Google settings from appsettings.json
-builder.Services.Configure<GoogleAuthConfig>(builder.Configuration.GetSection("GoogleAuth"));
-builder.Services.AddAuthentication().AddGoogle(googleOptions =>
+string? vaultUriString = builder.Configuration["VaultUri"];
+if (string.IsNullOrEmpty(vaultUriString))
 {
-    GoogleAuthConfig googleConfig = builder.Configuration.GetSection("GoogleAuth").Get<GoogleAuthConfig>();
-    googleOptions.ClientId = googleConfig.ClientId;
-    googleOptions.ClientSecret = googleConfig.ClientSecret;
-    googleOptions.SignInScheme = IdentityConstants.ExternalScheme;
+    throw new InvalidOperationException("VaultUri configuration not found.");
+}
+Uri keyVaultEndpoint = new Uri(vaultUriString);
+builder.Configuration.AddAzureKeyVault(keyVaultEndpoint, new DefaultAzureCredential());
+
+// Build a secret client
+SecretClient client = new SecretClient(keyVaultEndpoint, new DefaultAzureCredential());
+
+// Retrieve secrets asynchronously
+var clientId = await client.GetSecretAsync("GoogleClientId");
+var clientSecret = await client.GetSecretAsync("GoogleClientSecret");
+
+// Configure Google authentication with secrets from Azure Key Vault
+builder.Services.AddAuthentication().AddGoogle(options =>
+{
+    options.ClientId = clientId.Value.Value;
+    options.ClientSecret = clientSecret.Value.Value;
+    options.SignInScheme = IdentityConstants.ExternalScheme;
 });
+
+
+
+
+
+
+
+//// Bind Google settings from appsettings.json
+//builder.Services.Configure<GoogleAuthConfig>(builder.Configuration.GetSection("GoogleAuth"));
+//builder.Services.AddAuthentication().AddGoogle(googleOptions =>
+//{
+//    GoogleAuthConfig googleConfig = builder.Configuration.GetSection("GoogleAuth").Get<GoogleAuthConfig>();
+//    googleOptions.ClientId = googleConfig.ClientId;
+//    googleOptions.ClientSecret = googleConfig.ClientSecret;
+//    googleOptions.SignInScheme = IdentityConstants.ExternalScheme;
+//});
 
 
 
